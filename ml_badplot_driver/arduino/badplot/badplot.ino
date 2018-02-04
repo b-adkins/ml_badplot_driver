@@ -1,32 +1,55 @@
-/* Sweep
- by BARRAGAN <http://barraganstudio.com>
- This example code is in the public domain.
-
- modified 8 Nov 2013
- by Scott Fitzgerald
- http://www.arduino.cc/en/Tutorial/Sweep
-*/
+/**
+ * @file
+ * 
+ * Serial driver for a two DOF plot arm. Should run on any Arduino; tested with Teensy 2.0.
+ */
 
 #include <Servo.h>
 
-Servo myservo;  // create servo object to control a servo
-// twelve serv  o objects can be created on most boards
+Servo j1; // Shoulder joint
+Servo j2; // Elbow joint
 
-int pos = 0;    // variable to store the servo position
+// variables to store the servo position
+int pos = 0;
+int _phi1 = 0;
+int _phi2 = 0;
+
+// Speed limiter: will not accept a change in position greater than this
+int max_dphi = 2;
 
 void setup() {
-  myservo.attach(9);  // attaches the servo on pin 9 to the servo object
+  j1.attach(9);  // attaches the servo on pin 9 to the servo object
+  j2.attach(10);  // attaches the servo on pin 10 to the servo object
+}
+
+/**
+ * Attempts to perform a joint-space move.
+ * 
+ * @return True on success.
+ */
+bool goto_angles(int phi1, int phi2) {
+  if(abs(_phi1 - phi1) > max_dphi || abs(_phi2 - phi2) > max_dphi) {
+    return false;
+  }
+  j1.write(_phi1);
+  j2.write(_phi2);
+  return true; 
 }
 
 void loop() {
-  for (pos = 0; pos <= 30; pos += 1) { // goes from 0 degrees to 180 degrees
-    // in steps of 1 degree
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
+  for (pos = 0; pos <= 30; pos += 1) {
+    if(goto_angles(pos, pos)) {
+      _phi1 = pos;
+      _phi2 = pos;
+    }
+    delay(50);
   }
-  for (pos = 30; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(15);                       // waits 15ms for the servo to reach the position
+  for (pos = 30; pos >= 0; pos -= 1) {
+    if(goto_angles(pos, pos)) {
+      _phi1 = pos;
+      _phi2 = pos;
+    }
+    delay(50);
   }
 }
 
